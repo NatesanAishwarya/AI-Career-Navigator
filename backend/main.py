@@ -4,6 +4,7 @@ from database import SessionLocal
 from models import UserDB
 from database import engine
 from models import Base
+import bcrypt
 
 Base.metadata.create_all(bind=engine)
 
@@ -29,10 +30,25 @@ def register(user: User):
 
     db = SessionLocal()
 
+    existing_user = db.query(UserDB).filter(
+        UserDB.email == user.email
+    ).first()
+
+    if existing_user:
+        db.close()
+        return {
+            "message": "Email already registered"
+        }
+
+    hashed_password = bcrypt.hashpw(
+        user.password.encode("utf-8"),
+        bcrypt.gensalt()
+    ).decode("utf-8")
+
     new_user = UserDB(
         name=user.name,
         email=user.email,
-        password=user.password
+        password=hashed_password
     )
 
     db.add(new_user)
@@ -60,13 +76,15 @@ def login(data: Login):
     db = SessionLocal()
 
     user = db.query(UserDB).filter(
-        UserDB.email == data.email,
-        UserDB.password == data.password
+        UserDB.email == data.email
     ).first()
 
     db.close()
 
-    if user:
+    if user and bcrypt.checkpw(
+        data.password.encode("utf-8"),
+        user.password.encode("utf-8")
+    ):
         return {
             "message": "Login Successful"
         }
