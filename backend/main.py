@@ -8,7 +8,7 @@ import bcrypt
 from jose import jwt
 from datetime import datetime, timedelta
 
-SECRET_KEY = "YOUR_SECRET_KEY"
+SECRET_KEY = "********"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
