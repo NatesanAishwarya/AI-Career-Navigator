@@ -5,6 +5,12 @@ from models import UserDB
 from database import engine
 from models import Base
 import bcrypt
+from jose import jwt
+from datetime import datetime, timedelta
+
+SECRET_KEY = "careerpathai_secret_key"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 Base.metadata.create_all(bind=engine)
 
@@ -18,6 +24,24 @@ class User(BaseModel):
 class Login(BaseModel):
     email: str
     password: str
+
+def create_access_token(data: dict):
+
+    to_encode = data.copy()
+
+    expire = datetime.utcnow() + timedelta(
+        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+    )
+
+    to_encode.update({"exp": expire})
+
+    encoded_jwt = jwt.encode(
+        to_encode,
+        SECRET_KEY,
+        algorithm=ALGORITHM
+    )
+
+    return encoded_jwt
 
 @app.get("/")
 def home():
@@ -85,8 +109,14 @@ def login(data: Login):
         data.password.encode("utf-8"),
         user.password.encode("utf-8")
     ):
+
+        access_token = create_access_token(
+            data={"sub": user.email}
+        )
+
         return {
-            "message": "Login Successful"
+            "message": "Login Successful",
+            "access_token": access_token
         }
 
     return {
