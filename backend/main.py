@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from fastapi import Header
 from jose import JWTError
 
-SECRET_KEY = "careerpathai_secret_key"
+SECRET_KEY = "********"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
