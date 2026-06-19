@@ -7,6 +7,8 @@ from models import Base
 import bcrypt
 from jose import jwt
 from datetime import datetime, timedelta
+from fastapi import Header
+from jose import JWTError
 
 SECRET_KEY = "careerpathai_secret_key"
 ALGORITHM = "HS256"
@@ -42,6 +44,20 @@ def create_access_token(data: dict):
     )
 
     return encoded_jwt
+
+def verify_token(token: str):
+
+    try:
+        payload = jwt.decode(
+            token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM]
+        )
+
+        return payload
+
+    except JWTError:
+        return None
 
 @app.get("/")
 def home():
@@ -121,4 +137,19 @@ def login(data: Login):
 
     return {
         "message": "Invalid Credentials"
+    }
+
+@app.get("/profile")
+def profile(token: str):
+
+    payload = verify_token(token)
+
+    if not payload:
+        return {
+            "message": "Invalid Token"
+        }
+
+    return {
+        "message": "Protected Route Accessed",
+        "user": payload["sub"]
     }
