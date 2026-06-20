@@ -9,8 +9,12 @@ from jose import jwt
 from datetime import datetime, timedelta
 from fastapi import Header
 from jose import JWTError
+from dotenv import load_dotenv
+import os
 
-SECRET_KEY = "********"
+load_dotenv()
+
+SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -149,7 +153,23 @@ def profile(token: str):
             "message": "Invalid Token"
         }
 
+    email = payload["sub"]
+
+    db = SessionLocal()
+
+    user = db.query(UserDB).filter(
+        UserDB.email == email
+    ).first()
+
+    db.close()
+
+    if not user:
+        return {
+            "message": "User Not Found"
+        }
+
     return {
-        "message": "Protected Route Accessed",
-        "user": payload["sub"]
+        "id": user.id,
+        "name": user.name,
+        "email": user.email
     }
