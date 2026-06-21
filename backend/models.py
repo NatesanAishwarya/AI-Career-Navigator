@@ -10,3 +10,11 @@ class UserDB(Base):
     name = Column(String)
     email = Column(String, unique=True)
     password = Column(String)
+
+class CareerDB(Base):
+    __tablename__ = "careers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String)
+    skills = Column(String)
+    description = Column(String)

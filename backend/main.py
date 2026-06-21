@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from database import SessionLocal
-from models import UserDB
+from models import UserDB, CareerDB
 from database import engine
 from models import Base
 import bcrypt
@@ -30,6 +30,11 @@ class User(BaseModel):
 class Login(BaseModel):
     email: str
     password: str
+
+class Career(BaseModel):
+    title: str
+    skills: str
+    description: str
 
 def create_access_token(data: dict):
 
@@ -173,3 +178,52 @@ def profile(token: str):
         "name": user.name,
         "email": user.email
     }
+
+@app.post("/career")
+def add_career(career: Career):
+
+    db = SessionLocal()
+
+    new_career = CareerDB(
+        title=career.title,
+        skills=career.skills,
+        description=career.description
+    )
+
+    db.add(new_career)
+    db.commit()
+
+    db.close()
+
+    return {
+        "message": "Career Added Successfully"
+    }
+
+@app.get("/careers")
+def get_careers():
+
+    db = SessionLocal()
+
+    careers = db.query(CareerDB).all()
+
+    db.close()
+
+    return careers
+
+@app.get("/career/{career_id}")
+def get_career(career_id: int):
+
+    db = SessionLocal()
+
+    career = db.query(CareerDB).filter(
+        CareerDB.id == career_id
+    ).first()
+
+    db.close()
+
+    if not career:
+        return {
+            "message": "Career Not Found"
+        }
+
+    return career
