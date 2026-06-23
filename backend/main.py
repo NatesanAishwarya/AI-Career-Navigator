@@ -40,6 +40,9 @@ class Skill(BaseModel):
     skill_name: str
     category: str
 
+class UserSkills(BaseModel):
+    skills: str
+
 def create_access_token(data: dict):
 
     to_encode = data.copy()
@@ -261,3 +264,34 @@ def get_skills():
     db.close()
 
     return skills
+
+@app.post("/recommend")
+def recommend_careers(user_skills: UserSkills):
+
+    db = SessionLocal()
+
+    careers = db.query(CareerDB).all()
+
+    recommended = []
+
+    user_skill_list = [
+        skill.strip().lower()
+        for skill in user_skills.skills.split(",")
+    ]
+
+    for career in careers:
+
+        career_skill_list = [
+            skill.strip().lower()
+            for skill in career.skills.split(",")
+        ]
+
+        for skill in user_skill_list:
+
+            if skill in career_skill_list:
+                recommended.append(career)
+                break
+
+    db.close()
+
+    return recommended
