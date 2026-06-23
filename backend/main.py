@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from database import SessionLocal
-from models import UserDB, CareerDB
+from models import UserDB, CareerDB, SkillDB
 from database import engine
 from models import Base
 import bcrypt
@@ -35,6 +35,10 @@ class Career(BaseModel):
     title: str
     skills: str
     description: str
+
+class Skill(BaseModel):
+    skill_name: str
+    category: str
 
 def create_access_token(data: dict):
 
@@ -227,3 +231,33 @@ def get_career(career_id: int):
         }
 
     return career
+
+@app.post("/skill")
+def add_skill(skill: Skill):
+
+    db = SessionLocal()
+
+    new_skill = SkillDB(
+        skill_name=skill.skill_name,
+        category=skill.category
+    )
+
+    db.add(new_skill)
+    db.commit()
+
+    db.close()
+
+    return {
+        "message": "Skill Added Successfully"
+    }
+
+@app.get("/skills")
+def get_skills():
+
+    db = SessionLocal()
+
+    skills = db.query(SkillDB).all()
+
+    db.close()
+
+    return skills

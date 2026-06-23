@@ -18,3 +18,10 @@ class CareerDB(Base):
     title = Column(String)
     skills = Column(String)
     description = Column(String)
+
+class SkillDB(Base):
+    __tablename__ = "skills"
+
+    id = Column(Integer, primary_key=True, index=True)
+    skill_name = Column(String)
+    category = Column(String)
