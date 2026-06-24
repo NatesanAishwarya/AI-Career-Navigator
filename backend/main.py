@@ -272,7 +272,7 @@ def recommend_careers(user_skills: UserSkills):
 
     careers = db.query(CareerDB).all()
 
-    recommended = []
+    recommendations = []
 
     user_skill_list = [
         skill.strip().lower()
@@ -286,12 +286,45 @@ def recommend_careers(user_skills: UserSkills):
             for skill in career.skills.split(",")
         ]
 
+        matched_skills = []
+
         for skill in user_skill_list:
 
             if skill in career_skill_list:
-                recommended.append(career)
-                break
+                matched_skills.append(skill)
+
+        if matched_skills:
+
+            match_score = (
+                len(matched_skills)
+                / len(career_skill_list)
+            ) * 100
+
+            missing_skills = []
+
+            for skill in career_skill_list:
+
+                if skill not in user_skill_list:
+                    missing_skills.append(skill)
+
+            recommendations.append({
+                "career": career.title,
+                "match_score": round(match_score, 2),
+                "matched_skills": matched_skills,
+                "missing_skills": missing_skills,
+                "roadmap": (
+                    "Learn "
+                    + ", ".join(missing_skills)
+                    + " to improve your eligibility for "
+                    + career.title
+                )
+            })
+
+    recommendations.sort(
+        key=lambda x: x["match_score"],
+        reverse=True
+    )
 
     db.close()
 
-    return recommended
+    return recommendations
