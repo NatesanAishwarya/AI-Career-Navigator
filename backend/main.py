@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from database import SessionLocal
-from models import UserDB, CareerDB, SkillDB
+from models import UserDB, CareerDB, SkillDB, UserSkillDB
 from database import engine
 from models import Base
 import bcrypt
@@ -42,6 +42,13 @@ class Skill(BaseModel):
 
 class UserSkills(BaseModel):
     skills: str
+
+class UserSkill(BaseModel):
+    email: str
+    skill_name: str
+
+class UserEmail(BaseModel):
+    email: str
 
 def create_access_token(data: dict):
 
@@ -318,6 +325,99 @@ def recommend_careers(user_skills: UserSkills):
                     + " to improve your eligibility for "
                     + career.title
                 )
+            })
+
+    recommendations.sort(
+        key=lambda x: x["match_score"],
+        reverse=True
+    )
+
+    db.close()
+
+    return recommendations
+
+@app.post("/user-skill")
+def add_user_skill(user_skill: UserSkill):
+
+    db = SessionLocal()
+
+    new_skill = UserSkillDB(
+        email=user_skill.email,
+        skill_name=user_skill.skill_name
+    )
+
+    db.add(new_skill)
+    db.commit()
+
+    db.close()
+
+    return {
+        "message": "User Skill Added Successfully"
+    }
+
+@app.get("/user-skills/{email}")
+def get_user_skills(email: str):
+
+    db = SessionLocal()
+
+    skills = db.query(UserSkillDB).filter(
+        UserSkillDB.email == email
+    ).all()
+
+    db.close()
+
+    return skills
+
+@app.post("/recommend-by-email")
+def recommend_by_email(user: UserEmail):
+
+    db = SessionLocal()
+
+    user_skills = db.query(UserSkillDB).filter(
+        UserSkillDB.email == user.email
+    ).all()
+
+    careers = db.query(CareerDB).all()
+
+    recommendations = []
+
+    user_skill_list = [
+        skill.skill_name.lower()
+        for skill in user_skills
+    ]
+
+    for career in careers:
+
+        career_skill_list = [
+            skill.strip().lower()
+            for skill in career.skills.split(",")
+        ]
+
+        matched_skills = []
+
+        for skill in user_skill_list:
+
+            if skill in career_skill_list:
+                matched_skills.append(skill)
+
+        if matched_skills:
+
+            match_score = (
+                len(matched_skills)
+                / len(career_skill_list)
+            ) * 100
+
+            missing_skills = []
+
+            for skill in career_skill_list:
+                if skill not in user_skill_list:
+                    missing_skills.append(skill)
+
+            recommendations.append({
+                "career": career.title,
+                "match_score": round(match_score, 2),
+                "matched_skills": matched_skills,
+                "missing_skills": missing_skills
             })
 
     recommendations.sort(

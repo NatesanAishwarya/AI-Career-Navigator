@@ -25,3 +25,11 @@ class SkillDB(Base):
     id = Column(Integer, primary_key=True, index=True)
     skill_name = Column(String)
     category = Column(String)
+
+class UserSkillDB(Base):
+    __tablename__ = "user_skills"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String)
+    skill_name = Column(String)
+
